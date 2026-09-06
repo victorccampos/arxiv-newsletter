@@ -1,0 +1,5 @@
+.env
+.vscode
+*.txt
+*.html
+__pycache__
