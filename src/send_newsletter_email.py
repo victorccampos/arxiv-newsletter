@@ -1,13 +1,13 @@
-import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+import smtplib
 
-from email.message import EmailMessage # provavelmente será substituído.
-
-from datetime import datetime
 import os
 from dotenv import load_dotenv
+from pathlib import Path
+
 import re
+
 
 load_dotenv()
 
@@ -15,39 +15,34 @@ APP_PASSWORD = os.getenv("APP_PASSWORD")
 EMAIL_FROM = os.getenv("EMAIL_FROM")
 EMAIL_TO = os.getenv("EMAIL_TO")
 
-def clean_markdown_response(text: str) -> str:
+def format_html(text: str) -> str:
     """
-    Remove a formatação em Markdown da resposta obtida pela API do Gemini.
+    Remove os backticks da resposta obtida pela API do Gemini que é formatada em
+    Markdown.
     """
-    
     # Remove ```html no início e ``` no final se existirem
     padrao = r"^```(?:html)?\s*(.*?)\s*```$"
     match = re.search(padrao, text.strip(), re.DOTALL | re.IGNORECASE)
+    
     if match:
         return match.group(1).strip()
-    return text.strip()
+    
+    html = text.strip()
+    Path("../html/newsletter_content.html").write_text(html)
+        
+    return html
 
 
 def send_email(subject: str, html_content: str):
     msg = MIMEMultipart('alternative')
     msg["Subject"] = subject
     msg["From"] = EMAIL_FROM
-    msg["To"] = EMAIL_TO
+    # TODO: implementar mailing list
+    msg["To"] = EMAIL_TO 
     
-    #msg.set_content(body)
     msg.attach(MIMEText(html_content, "html", "utf-8"))
     
     with smtplib.SMTP("smtp.gmail.com", 587) as smtp:
         smtp.starttls()
         smtp.login(EMAIL_FROM, APP_PASSWORD)
         smtp.send_message(msg)
-
-
-
-if __name__ == "__main__":
-
-
-    subject: str= f"My Subject"
-    body: str = "Body from email"
-
-    # send_email(subject, body)
